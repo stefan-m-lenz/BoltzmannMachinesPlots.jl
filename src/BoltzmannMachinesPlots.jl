@@ -2,7 +2,7 @@
 Contains all plotting functions for displaying information collected
 in module `BoltzmannMachines`. Most important function is `plotevaluation`.
 "
-module BMPlots
+module BoltzmannMachinesPlots
 
 import BoltzmannMachines
 const BMs = BoltzmannMachines
@@ -342,4 +342,4 @@ function crossvalidationcurve(monitor::BMs.Monitor,
          Guide.xlabel("Epoch"), Guide.ylabel("Score"))
 end
 
-end # module BMPlots
+end # module BoltzmannMachinesPlots
