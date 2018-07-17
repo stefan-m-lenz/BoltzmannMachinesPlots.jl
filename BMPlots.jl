@@ -9,7 +9,7 @@ const BMs = BoltzmannMachines
 
 using DataFrames, Gadfly, Compose
 
-export plotevaluation
+export plotevaluation, crossvalidationcurve
 
 
 function checkdata(plotdata)
