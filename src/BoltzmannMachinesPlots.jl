@@ -100,9 +100,12 @@ plottitledict = Dict(
 
 
 """
+    plotevaluation(monitor; ...)
     plotevaluation(monitor, evaluationkey; ...)
 Plots a curve that shows the values of the evaluation contained in the `monitor`
 and specified by the `evaluationkey` over the course of the training epochs.
+If no evaluationkey is specified, the evaluation type of the first monitor
+element is used.
 
 Optional keyword argument `sdrange`:
 For evaluations with keys `BoltzmannMachines.monitorloglikelihood` and
@@ -114,7 +117,8 @@ the area around the curve that contains the values that deviate at maximum
 `sdrange` times the standard deviation from the estimator.
 Default value for `sdrange` is 2.0.
 """
-function plotevaluation(monitor::BMs.Monitor, evaluationkey::String;
+function plotevaluation(monitor::BMs.Monitor,
+      evaluationkey::String = monitor[1].evaluation;
       sdrange::Float64 = 2.0, changetitle::Function = identity)
 
    if evaluationkey == BMs.monitorloglikelihood
