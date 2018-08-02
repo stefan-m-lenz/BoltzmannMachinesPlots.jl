@@ -77,9 +77,13 @@ function plotlogproblowerbound(monitor::BMs.Monitor; sdrange::Float64 = 0.0)
       plot(plotdata, x = "epoch", y = "value", ymin = "ymin", ymax = "ymax",
             color = "datasetname",
             Geom.line, Geom.ribbon,
+            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
+            Guide.colorkey(title = "Data set"),
             Guide.title(title))
    else
       plot(plotdata, x = "epoch", y = "value", color = "datasetname",
+            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
+            Guide.colorkey(title = "Data set"),
             Geom.line, Guide.title(title))
    end
 end
@@ -132,6 +136,8 @@ function plotevaluation(monitor::BMs.Monitor,
    plotdata = extractevaluationdata(monitor, evaluationkey)
    checkdata(plotdata)
    plot(plotdata, x ="epoch", y = "value", color = "datasetname",
+         Guide.xlabel("Epoch"), Guide.ylabel("Value"),
+         Guide.colorkey(title = "Data set"),
          Geom.line, Guide.title(title))
 end
 
@@ -145,10 +151,14 @@ function plotloglikelihood(monitor::BMs.Monitor; sdrange::Float64 = 2.0)
    title = "Average log-likelihood"
    if sdrange != 0
       plot(plotdata, x = "epoch", y = "value", ymin = "ymin", ymax = "ymax",
-            color = "datasetname", Geom.line, Geom.ribbon, Guide.title(title))
+            color = "datasetname", Geom.line, Geom.ribbon, Guide.title(title),
+            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
+            Guide.colorkey(title = "Data set"))
    else
       plot(plotdata, x = "epoch", y = "value", color = "datasetname",
-            Geom.line, Guide.title(title))
+            Geom.line, Guide.title(title),
+            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
+            Guide.colorkey(title = "Data set"))
    end
 end
 
