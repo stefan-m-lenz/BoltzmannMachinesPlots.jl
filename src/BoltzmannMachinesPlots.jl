@@ -166,7 +166,7 @@ function plotmeandiffpervariable(monitor::BMs.Monitor)
             Geom.line, Guide.colorkey(""))
    end
    rowlength = ceil(Int, sqrt(nvariables))
-   emptyplots = repmat([context()], rowlength^2 - nvariables)
+   emptyplots = repeat([context()], rowlength^2 - nvariables)
    plotgrid = reshape(vcat(plots, emptyplots), rowlength, rowlength)
    plotgrid = permutedims(plotgrid, [2;1])
    vstack(title, compose(context(0, 0, 1, 0.9), gridstack(plotgrid)))
@@ -247,7 +247,7 @@ function plotpairs(x::Matrix{Float64};
          Dict(zip(labels, [ x[:,i] for i = 1:nvariables ])));
 
    if isempty(subgroups)
-      subgroups = repmat([""], size(plotdata, 1))
+      subgroups = repeat([""], size(plotdata, 1))
    end
    plotdata[:subgroup] = subgroups
 
