@@ -7,7 +7,11 @@ module BoltzmannMachinesPlots
 import BoltzmannMachines
 const BMs = BoltzmannMachines
 
-using DataFrames, Gadfly, Compose
+using Compose
+using DataFrames
+using Gadfly
+using Statistics
+
 
 export plotevaluation, crossvalidationcurve
 
@@ -24,7 +28,7 @@ function getvalue(monitor::BMs.Monitor, evaluation::String, epoch::Int)
 end
 
 function extractevaluationdata(monitor::BMs.Monitor, evaluation::String)
-   evaluationidxs = find(item -> item.evaluation == evaluation, monitor)
+   evaluationidxs = findall(item -> item.evaluation == evaluation, monitor)
    epochs = map(i -> monitor[i].epoch, evaluationidxs)
    values = map(i -> monitor[i].value, evaluationidxs)
    datasetnames = map(i -> monitor[i].datasetname, evaluationidxs)
@@ -53,8 +57,8 @@ function extractaisdata(monitor::BMs.Monitor, evaluation::String, sdrange::Float
          # log(Z) is subtracted from logproblowerbound, so overstimating log(Z)
          # means underestimating the log probability
          bottom, top = BMs.aisprecision(logr, sd, sdrange)
-         plotdata[:ymin][plotdata[:epoch] .== epoch] -= top
-         plotdata[:ymax][plotdata[:epoch] .== epoch] -= bottom
+         plotdata[:ymin][plotdata[:epoch] .== epoch] .-= top
+         plotdata[:ymax][plotdata[:epoch] .== epoch] .-= bottom
       end
    end
 
@@ -163,44 +167,20 @@ function plotloglikelihood(monitor::BMs.Monitor; sdrange::Float64 = 2.0)
 end
 
 
-function plotmeandiffpervariable(monitor::BMs.Monitor)
-   plotdata = extractevaluationdata(monitor, BMs.monitormeandiffpervariable)
-   plotdata[:, :variableid] = map(s -> parse(Int, match(r"/Var([0-9]+)$", s)[1]),
-         plotdata[:, :datasetname])
-   variables = sort!(unique(plotdata[:, :variableid]))
-   nvariables = length(variables)
-   title = compose(context(0,0,1,0.1), font("Helvetica"),
-         text(0.5, 1.0,
-               "Difference of mean between generated and original samples",
-               hcenter, vbottom))
-   plots = Vector{Union{Compose.Context, Gadfly.Plot}}(nvariables)
-   for i = 1:nvariables
-      plots[i] = plot(plotdata[plotdata[:, :variableid] .== variables[i], :],
-            x = "epoch", y = "value", color = "datasetname",
-            Geom.line, Guide.colorkey(""))
-   end
-   rowlength = ceil(Int, sqrt(nvariables))
-   emptyplots = repmat([context()], rowlength^2 - nvariables)
-   plotgrid = reshape(vcat(plots, emptyplots), rowlength, rowlength)
-   plotgrid = permutedims(plotgrid, [2;1])
-   vstack(title, compose(context(0, 0, 1, 0.9), gridstack(plotgrid)))
-end
-
-
 function plotcurvebundles(x::Matrix{Float64};
       nlabelvars::Int =
-            sum(mapslices(col -> all(((col .== 1.0) .| (col .== 0.0))), x, 1))
+            sum(mapslices(col -> all(((col .== 1.0) .| (col .== 0.0))), x, dims = 1))
       )
 
    if nlabelvars == 0
       plot(x, x = Col.index, y = Col.value, color = Row.index, Geom.line,
-            Guide.colorkey("Sample"), Guide.xlabel("Variable index"),
+            Guide.colorkey(title = "Sample"), Guide.xlabel("Variable index"),
             Guide.ylabel("Value"), Scale.x_discrete, Scale.color_discrete)
    else
       powersoftwo = 2 .^ (0:(nlabelvars-1))
       labels = vec(mapslices(
             row -> sum(powersoftwo[convert(Vector{Bool}, row)]) + 1,
-            x[:, 1:nlabelvars], 2))
+            x[:, 1:nlabelvars], dims = 2))
 
       nlabels = maximum(labels)
       labelcolors = Scale.default_discrete_colors(nlabels)
@@ -218,92 +198,6 @@ function plotcurvebundles(x::Matrix{Float64};
             Guide.xlabel("Variable index"),
             Guide.ylabel("Value"))
    end
-end
-
-
-function plotreconstructionerror(monitor::BMs.Monitor)
-   plotevaluation(monitor, BMs.monitorreconstructionerror)
-end
-
-function bivariategaussiandensity(x1::Vector{Float64}, x2::Vector{Float64})
-   c = cov(x1, x2)
-   s = [var(x1) c; c var(x2)]
-   sinv = inv(s)
-   factor = 1 / (2pi * sqrt(det(s)))
-   mu = [mean(x1); mean(x2)]
-   (x,y) -> factor * exp(-0.5 * dot([x;y] - mu, sinv * ([x;y] - mu)))
-end
-
-"
-Pairs plot for each variable of the data set `x` versus each other variable.
-"
-function plotpairs(x::Matrix{Float64};
-      filename::String = "pairs",
-      labels = Vector{String}(),
-      cellsize = 0,
-      subgroups = Vector{String}(),
-      densityestimation::Function = BMs.emptyfunc,
-      datafordensityestimation::Matrix{Float64} = x)
-
-   if cellsize == 0
-      cellsize = 60mm
-   end
-
-   nvariables = size(x,2)
-   nlabels = length(labels)
-
-   # label all unlabeled variables with "x1", "x2", ...
-   if nlabels < nvariables
-      labels = [labels; [string("x",i) for i = 1:(nvariables-nlabels)]];
-   end
-
-   plotdata = convert(DataFrame,
-         Dict(zip(labels, [ x[:,i] for i = 1:nvariables ])));
-
-   if isempty(subgroups)
-      subgroups = repmat([""], size(plotdata, 1))
-   end
-   plotdata[:subgroup] = subgroups
-
-   if densityestimation != BMs.emptyfunc
-      mins = [minimum(x[:,i])::Float64 for i = 1:nvariables]
-      maxs = [maximum(x[:,i])::Float64 for i = 1:nvariables]
-   end
-
-   grid = Matrix{Compose.Context}(nvariables, nvariables)
-   for i = 1:nvariables
-      for j = 1:nvariables
-         if i == j
-            grid[i,j] = render(plot(plotdata, x = labels[i],
-                  color = "subgroup",
-                  Theme(key_position = :none), # do not show legend
-                  Geom.histogram))
-         else
-            if densityestimation != BMs.emptyfunc
-               # bug in Gadfly: contour plot only if other layer has no subgroups
-               estimateddensityfunction = densityestimation(
-                     datafordensityestimation[:,i],
-                     datafordensityestimation[:,j])
-               grid[i,j] = render(plot(
-                     layer(z = estimateddensityfunction,
-                           x = linspace(mins[i], maxs[i], 100),
-                           y = linspace(mins[j], maxs[j], 100), Geom.contour),
-                     layer(plotdata, x = labels[i], y = labels[j],
-                           Theme(key_position = :none),
-                           Geom.point),
-                     Theme(key_position = :none), # no color bars
-                     Guide.xlabel(labels[i]), Guide.ylabel(labels[j])))
-            else
-               grid[i,j] = render(plot(plotdata, x = labels[i], y = labels[j],
-                     color = "subgroup",
-                     Theme(key_position = :none),
-                     Geom.point))
-            end
-         end
-      end
-   end
-   draw(PNG(string(filename, ".png"), nvariables*cellsize, nvariables*cellsize),
-         gridstack(grid))
 end
 
 
