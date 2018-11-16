@@ -69,14 +69,37 @@ function extractaisdata(monitor::BMs.Monitor, evaluation::String, sdrange::Float
    plotdata
 end
 
+
 "
 Plots the information about the estimated lower bound of the log probability
 that has been gathered while training a BMs.
 "
-function plotlogproblowerbound(monitor::BMs.Monitor; sdrange::Float64 = 0.0)
-   title = "Average lower bound of log probability"
-   plotdata = extractaisdata(monitor, BMs.monitorlogproblowerbound, sdrange)
+function plotestimatedprob(monitor::BMs.Monitor, evaluationkey::String;
+      sdrange::Float64 = 0.0)
+
+   title = plottitledict[evaluationkey]
+   plotdata = extractaisdata(monitor, evaluationkey, sdrange)
    checkdata(plotdata)
+
+   # remove ribbon for values that are too uncertain and warn about it
+   badribbon = false
+   if sdrange != 0
+      valrange = abs(maximum(plotdata[:, :value]) - minimum(plotdata[:, :value]))
+      for row in eachrow(plotdata)
+         if row[:ymin] < row[:value] - 5 * valrange
+            row[:ymin] = row[:value]
+            badribbon = true
+         end
+         if row[:ymax] > row[:value] + 5 * valrange
+            row[:ymax] = row[:value]
+            badribbon = true
+         end
+      end
+   end
+   if badribbon
+      @warn "Too much uncertainty: Ribbon (partially) not displayed."
+   end
+
    if sdrange != 0
       plot(plotdata, x = "epoch", y = "value", ymin = "ymin", ymax = "ymax",
             color = "datasetname",
@@ -92,13 +115,11 @@ function plotlogproblowerbound(monitor::BMs.Monitor; sdrange::Float64 = 0.0)
    end
 end
 
-function plotexactloglikelihood(monitor::BMs.Monitor)
-   plotevaluation(monitor, BMs.monitorexactloglikelihood)
-end
 
 plottitledict = Dict(
       BMs.monitorreconstructionerror => "Mean reconstruction error",
-      BMs.monitorloglikelihood => "Log-likelihood estimated by AIS",
+      BMs.monitorlogproblowerbound => "Average lower bound of log probability",
+      BMs.monitorloglikelihood => "Average log-likelihood",
       BMs.monitormeandiff => "L²-difference between means \nof generated and original data",
       BMs.monitorexactloglikelihood => "Exact log-likelihood",
       BMs.monitorweightsnorm => "L²-norm of weights",
@@ -129,10 +150,8 @@ function plotevaluation(monitor::BMs.Monitor,
       evaluationkey::String = monitor[1].evaluation;
       sdrange::Float64 = 2.0, changetitle::Function = identity)
 
-   if evaluationkey == BMs.monitorloglikelihood
-      return plotloglikelihood(monitor, sdrange = sdrange)
-   elseif evaluationkey == BMs.monitorlogproblowerbound
-      return plotlogproblowerbound(monitor, sdrange = sdrange)
+   if evaluationkey in [BMs.monitorloglikelihood; BMs.monitorlogproblowerbound]
+      return plotestimatedprob(monitor, evaluationkey; sdrange = sdrange)
    end
 
    # Otherwise, it is a simple line plot.
@@ -143,27 +162,6 @@ function plotevaluation(monitor::BMs.Monitor,
          Guide.xlabel("Epoch"), Guide.ylabel("Value"),
          Guide.colorkey(title = "Data set"),
          Geom.line, Guide.title(title))
-end
-
-"
-Plots the information about the log likelihood that has been gathered while
-training an RBMs.
-"
-function plotloglikelihood(monitor::BMs.Monitor; sdrange::Float64 = 2.0)
-   plotdata = extractaisdata(monitor, BMs.monitorloglikelihood, sdrange)
-   checkdata(plotdata)
-   title = "Average log-likelihood"
-   if sdrange != 0
-      plot(plotdata, x = "epoch", y = "value", ymin = "ymin", ymax = "ymax",
-            color = "datasetname", Geom.line, Geom.ribbon, Guide.title(title),
-            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
-            Guide.colorkey(title = "Data set"))
-   else
-      plot(plotdata, x = "epoch", y = "value", color = "datasetname",
-            Geom.line, Guide.title(title),
-            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
-            Guide.colorkey(title = "Data set"))
-   end
 end
 
 
