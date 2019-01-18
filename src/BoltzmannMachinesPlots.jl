@@ -13,7 +13,7 @@ using Gadfly
 using Statistics
 
 
-export plotevaluation, crossvalidationcurve
+export plotevaluation, crossvalidationcurve, scatterhidden
 
 
 function checkdata(plotdata)
@@ -199,26 +199,64 @@ function plotcurvebundles(x::Matrix{Float64};
 end
 
 
-function scatterhidden(rbm::BMs.AbstractRBM, x::Matrix{Float64};
+"""
+    scatterhidden(bm, x; ...)
+    scatterhidden(h; ...)
+Creates a scatter plot of the logarithmized activation potential of
+hidden nodes, similar to a PCA plot.
+The activation is either induced by the dataset `x` in the Boltzmann machine `bm`
+or it is directly specified as matrix `h`.
+
+# Optional keyword arguments:
+* `hiddennodes`: Tuple of integers, default `(1,2)`, selecting the first two
+  nodes of the (last) hidden layer.
+* `labels`: a vector containing string labels for each of the data points
+"""
+function scatterhidden(bm::BMs.AbstractBM, x::Matrix{Float64};
       hiddennodes::Tuple{Int,Int} = (1,2),
       labels = Vector{String}())
 
-   hh = BMs.hiddenpotential(rbm, x)
-   hh = hh[:,collect(hiddennodes)]
+   function hiddenactivations(rbm::BMs.AbstractRBM, x)
+      BMs.logit.(BMs.hiddenpotential(rbm, x))
+   end
+
+   function hiddenactivations(rbm::BMs.AbstractXBernoulliRBM, x)
+      BMs.hiddeninput(rbm, x)
+   end
+
+   function hiddenactivations(dbm::BMs.MultimodalDBM, x)
+      BMs.logit.(BMs.meanfield(dbm, x)[end])
+   end
+
+   hh = hiddenactivations(bm, x)
+   scatterhidden(hh, hiddennodes = hiddennodes, labels = labels)
+end
+
+function scatterhidden(hh::Matrix{Float64};
+   hiddennodes::Tuple{Int,Int} = (1,2),
+   labels = Vector{String}())
+
+   plottingargs = [
+      Guide.xlabel("Node " * string(hiddennodes[1]));
+      Guide.ylabel("Node " * string(hiddennodes[2]));
+      Theme(lowlight_color = c -> Gadfly.RGBA{Float32}(c.r, c.g, c.b, 0.01));
+      Geom.point
+   ]
 
    if !isempty(labels)
-      nsamples = size(x,1)
+      nsamples = size(hh, 1)
       plotdata = DataFrame(x = hh[:,1], y = hh[:,2])
       if length(labels) == nsamples
          plotdata[:label] = labels
       else
-         error("Not enough labels ($(length(labels))) for samples ($(nsamples))")
+         error("Not enough labels ($(length(labels))) for samples ($nsamples)")
       end
-      plot(plotdata, x = "x", y = "y", color = "label", Geom.point)
-   else
-      plot(x = hh[:,1], y = hh[:,2], Geom.point)
-   end
 
+      plot(plotdata, x = "x", y = "y", color = "label", plottingargs...)
+   else
+      plot(x = hh[:, hiddennodes[1]], y = hh[:, hiddennodes[2]],
+            plottingargs...)
+   end
 end
 
 
