@@ -199,6 +199,53 @@ function plotcurvebundles(x::Matrix{Float64};
 end
 
 
+function scatter(hh::Matrix{Float64};
+      labels = Vector{String}(),
+      opacity::Float64 = 1.0,
+      xlabel::String = "", ylabel::String = "")
+
+   if isempty(labels)
+      labelsgiven = false
+      labels = repeat([""], size(hh, 1))
+      uniquelabels = [""]
+   else
+      labelsgiven = true
+      uniquelabels = unique(labels)
+      nsamples = size(hh, 1)
+      plotdata = DataFrame(x = hh[:,1], y = hh[:,2])
+      if length(labels) == nsamples
+         plotdata[:label] = labels
+      else
+         error("Not enough labels ($(length(labels))) for samples ($nsamples)")
+      end
+   end
+
+   nuniquelabels = length(uniquelabels)
+   labelcolors = Scale.default_discrete_colors(nuniquelabels)
+   if opacity != 1.0
+      pointcolors = map(c -> Gadfly.Colors.coloralpha(c, opacity),
+            labelcolors)
+   else
+      pointcolors = labelcolors
+   end
+
+   layers = map(i -> begin
+         labelmask = (labels .== uniquelabels[i])
+         layer(
+               x = hh[labelmask, 1],
+               y = hh[labelmask, 2], Geom.point,
+               Theme(default_color = pointcolors[i]))
+      end, 1:nuniquelabels)
+
+   if labelsgiven
+      legend = [Guide.manual_color_key("", uniquelabels, labelcolors)]
+   else
+      legend = []
+   end
+   plot(layers..., Guide.xlabel(xlabel), Guide.ylabel(ylabel), legend...)
+end
+
+
 """
     scatterhidden(bm, x; ...)
     scatterhidden(h; ...)
@@ -214,7 +261,8 @@ or it is directly specified as matrix `h`.
 """
 function scatterhidden(bm::BMs.AbstractBM, x::Matrix{Float64};
       hiddennodes::Tuple{Int,Int} = (1,2),
-      labels = Vector{String}())
+      labels = Vector{String}(),
+      opacity::Float64 = 1.0)
 
    function hiddenactivations(rbm::BMs.AbstractRBM, x)
       BMs.logit.(BMs.hiddenpotential(rbm, x))
@@ -229,34 +277,18 @@ function scatterhidden(bm::BMs.AbstractBM, x::Matrix{Float64};
    end
 
    hh = hiddenactivations(bm, x)
-   scatterhidden(hh, hiddennodes = hiddennodes, labels = labels)
+   scatterhidden(hh, hiddennodes = hiddennodes,
+         labels = labels, opacity = opacity)
 end
 
 function scatterhidden(hh::Matrix{Float64};
-   hiddennodes::Tuple{Int,Int} = (1,2),
-   labels = Vector{String}())
+      hiddennodes::Tuple{Int,Int} = (1,2),
+      labels = Vector{String}(),
+      opacity::Float64 = 1.0)
 
-   plottingargs = [
-      Guide.xlabel("Node " * string(hiddennodes[1]));
-      Guide.ylabel("Node " * string(hiddennodes[2]));
-      Theme(lowlight_color = c -> Gadfly.RGBA{Float32}(c.r, c.g, c.b, 0.01));
-      Geom.point
-   ]
-
-   if !isempty(labels)
-      nsamples = size(hh, 1)
-      plotdata = DataFrame(x = hh[:,1], y = hh[:,2])
-      if length(labels) == nsamples
-         plotdata[:label] = labels
-      else
-         error("Not enough labels ($(length(labels))) for samples ($nsamples)")
-      end
-
-      plot(plotdata, x = "x", y = "y", color = "label", plottingargs...)
-   else
-      plot(x = hh[:, hiddennodes[1]], y = hh[:, hiddennodes[2]],
-            plottingargs...)
-   end
+   scatter(hh; labels = labels, opacity = opacity,
+         xlabel = "Hidden node " * string(hiddennodes[1]),
+         ylabel = "Hidden node " * string(hiddennodes[2]))
 end
 
 
