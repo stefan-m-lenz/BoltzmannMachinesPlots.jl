@@ -234,8 +234,9 @@ function scatter(hh::Matrix{Float64};
          layer(
                x = hh[labelmask, 1],
                y = hh[labelmask, 2], Geom.point,
-               Theme(default_color = pointcolors[i]))
-      end, 1:nuniquelabels)
+               Theme(default_color = pointcolors[i],
+                     discrete_highlight_color = c -> nothing))
+      end, nuniquelabels:-1:1)
 
    if labelsgiven
       legend = [Guide.manual_color_key("", uniquelabels, labelcolors)]
