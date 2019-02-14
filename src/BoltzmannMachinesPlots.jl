@@ -97,7 +97,7 @@ function plotestimatedprob(monitor::BMs.Monitor, evaluationkey::String;
       end
    end
    if badribbon
-      @warn "Too much uncertainty: Ribbon (partially) not displayed."
+      @warn "Too much uncertainty at some points: Ribbon (partially) not displayed."
    end
 
    if sdrange != 0
