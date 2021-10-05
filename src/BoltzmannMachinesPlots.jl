@@ -41,12 +41,12 @@ function extractaisdata(monitor::BMs.Monitor, evaluation::String, sdrange::Float
 
    # Now integrate the information about the precision of AIS in the dataframe.
    # It is common for all datasets.
-   epochs = unique(plotdata[:epoch])
+   epochs = unique(plotdata[!, :epoch])
 
    if sdrange != 0.0
 
-      plotdata[:ymin] = copy(plotdata[:value])
-      plotdata[:ymax] = copy(plotdata[:value])
+      plotdata[!, :ymin] = copy(plotdata[!, :value])
+      plotdata[!, :ymax] = copy(plotdata[!, :value])
 
       # Use standard deviation of log partition function estimator to
       # plot ribbon around log probs.
@@ -57,14 +57,14 @@ function extractaisdata(monitor::BMs.Monitor, evaluation::String, sdrange::Float
          # log(Z) is subtracted from logproblowerbound, so overstimating log(Z)
          # means underestimating the log probability
          bottom, top = BMs.aisprecision(logr, sd, sdrange)
-         plotdata[:ymin][plotdata[:epoch] .== epoch] .-= top
-         plotdata[:ymax][plotdata[:epoch] .== epoch] .-= bottom
+         plotdata[!, :ymin][plotdata[!, :epoch] .== epoch] .-= top
+         plotdata[!, :ymax][plotdata[!, :epoch] .== epoch] .-= bottom
       end
    end
 
    # avoid plotting error if NaNs were introduced when calculating ymin/ymax
-   plotdata[:ymin][isnan.(plotdata[:ymin])] .= 0
-   plotdata[:ymax][isnan.(plotdata[:ymax])] .= 0
+   plotdata[!, :ymin][isnan.(plotdata[!, :ymin])] .= 0
+   plotdata[!, :ymax][isnan.(plotdata[!, :ymax])] .= 0
 
    plotdata
 end
@@ -84,7 +84,7 @@ function plotestimatedprob(monitor::BMs.Monitor, evaluationkey::String;
    # remove ribbon for values that are too uncertain and warn about it
    badribbon = false
    if sdrange != 0
-      valrange = abs(maximum(plotdata[:, :value]) - minimum(plotdata[:, :value]))
+      valrange = abs(maximum(plotdata[!, :value]) - minimum(plotdata[!, :value]))
       for row in eachrow(plotdata)
          if row[:ymin] < row[:value] - 5 * valrange
             row[:ymin] = row[:value]
@@ -214,7 +214,7 @@ function scatter(hh::Matrix{Float64};
       nsamples = size(hh, 1)
       plotdata = DataFrame(x = hh[:,1], y = hh[:,2])
       if length(labels) == nsamples
-         plotdata[:label] = labels
+         plotdata[!, :label] = labels
       else
          error("Not enough labels ($(length(labels))) for samples ($nsamples)")
       end
@@ -311,12 +311,12 @@ function crossvalidationcurve(monitor::BMs.Monitor,
    boxplotdata = DataFrame(
          epoch = map(r -> r.epoch, monitor),
          score = map(r -> r.value, monitor))
-   meanplotdata = aggregate(boxplotdata, :epoch, mean)
+   meanplotdata = combine(groupby(boxplotdata, :epoch), :score => mean)
    plot(
          layer(meanplotdata, x = "epoch", y = "score_mean", Geom.line,
                Theme(default_color = parse(Compose.Colorant, "green"))),
-         layer(boxplotdata, x = "epoch", y = "score", Geom.boxplot),
-         Guide.xlabel("Epoch"), Guide.ylabel("Score"))
+         layer(meanplotdata, x = "epoch", y = "score", Geom.boxplot),
+               Guide.xlabel("Epoch"), Guide.ylabel("Score"))
 end
 
 end # module BoltzmannMachinesPlots
