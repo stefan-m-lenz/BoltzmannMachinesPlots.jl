@@ -13,7 +13,7 @@ using Gadfly
 using Statistics
 
 
-export plotevaluation, crossvalidationcurve, scatterhidden
+export plotevaluation, plottop2latentdims, crossvalidationcurve, scatterhidden
 
 
 function checkdata(plotdata)
@@ -162,6 +162,26 @@ function plotevaluation(monitor::BMs.Monitor,
          Guide.xlabel("Epoch"), Guide.ylabel("Value"),
          Guide.colorkey(title = "Data set"),
          Geom.line, Guide.title(title))
+end
+
+
+"""
+    plottop2latentdims(dbm, x; ...)
+Creates a two-dimensional scatter plot with the top two latent dimensions
+of the data set `x` that are extracted from the hidden nodes of the `dbm`
+(see `BoltzmannMachines.top2latentdims`).
+
+## Optional keyword argument:
+* `labels`: Can be specified for coloring the dots
+"""
+function plottop2latentdims(dbm, x; labels = [])
+   dimred = BMs.top2latentdims(dbm, x)
+   if isempty(labels)
+      Gadfly.plot(x = dimred[:,1], y = dimred[:, 2])
+   else
+      Gadfly.plot(x = dimred[:,1], y = dimred[:, 2], color = labels)
+   end
+   dimred
 end
 
 
