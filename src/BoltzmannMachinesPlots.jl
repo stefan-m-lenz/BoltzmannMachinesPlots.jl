@@ -174,13 +174,9 @@ of the data set `x` that are extracted from the hidden nodes of the `dbm`
 ## Optional keyword argument:
 * `labels`: Can be specified for coloring the dots
 """
-function plottop2latentdims(dbm, x; labels = [])
+function plottop2latentdims(dbm, x; labels = [], opacity = 1.0)
    dimred = BMs.top2latentdims(dbm, x)
-   if isempty(labels)
-      Gadfly.plot(x = dimred[:,1], y = dimred[:, 2])
-   else
-      Gadfly.plot(x = dimred[:,1], y = dimred[:, 2], color = labels)
-   end
+   scatter(dimred, opacity = opacity, labels = labels)
 end
 
 
@@ -219,9 +215,9 @@ end
 
 
 function scatter(hh::Matrix{Float64};
-      labels = Vector{String}(),
+      labels::Vector{T} = Vector{T}(undef, 0),
       opacity::Float64 = 1.0,
-      xlabel::String = "", ylabel::String = "")
+      xlabel::String = "", ylabel::String = "") where T
 
    if isempty(labels)
       labelsgiven = false
@@ -230,6 +226,7 @@ function scatter(hh::Matrix{Float64};
    else
       labelsgiven = true
       uniquelabels = unique(labels)
+      sort!(uniquelabels)
       nsamples = size(hh, 1)
       plotdata = DataFrame(x = hh[:,1], y = hh[:,2])
       if length(labels) == nsamples
@@ -258,7 +255,7 @@ function scatter(hh::Matrix{Float64};
       end, nuniquelabels:-1:1)
 
    if labelsgiven
-      legend = [Guide.manual_color_key("", uniquelabels, labelcolors)]
+      legend = [Guide.manual_color_key("", string.(uniquelabels), labelcolors)]
    else
       legend = []
    end
