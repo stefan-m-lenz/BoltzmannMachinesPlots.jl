@@ -181,7 +181,6 @@ function plottop2latentdims(dbm, x; labels = [])
    else
       Gadfly.plot(x = dimred[:,1], y = dimred[:, 2], color = labels)
    end
-   dimred
 end
 
 
