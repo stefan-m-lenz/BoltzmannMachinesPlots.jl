@@ -27,3 +27,7 @@ test_scatterhidden()
 @test BoltzmannMachinesPlots.plotcurvebundles(BMs.curvebundles(nvariables = 10, nbundles = 3,
       nperbundle = 4, noisesd = 0.03,
       addlabels = true)) isa Gadfly.Plot
+
+@test BoltzmannMachinesPlots.plotcurvebundles(BMs.curvebundles(nvariables = 10, nbundles = 3,
+      nperbundle = 4, noisesd = 0.03,
+      addlabels = false)) isa Gadfly.Plot
