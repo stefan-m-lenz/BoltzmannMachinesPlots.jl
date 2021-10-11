@@ -24,6 +24,25 @@ test_scatterhidden()
 # test_plotevaluation_noribbon()
 
 
+function test_crossvalidation()
+   nsamples = 30;
+   nvariables = 4;
+   x = barsandstripes(nsamples, nvariables);
+   # Determine the optimal number of training epochs for a RBM
+   monitor = crossvalidation(x,
+         (x, datadict) ->
+            begin
+               monitors, dbm = BMs.monitored_fitdbm(x, nhiddens = [2, 2],
+                     learningrate = 0.1, epochs = 3,
+                     monitoring = monitorexactloglikelihood!)
+               monitors[end]
+            end);
+   @test crossvalidationcurve(monitor) isa Gadfly.Plot
+   nothing
+end
+test_crossvalidation()
+
+
 @test BoltzmannMachinesPlots.plotcurvebundles(BMs.curvebundles(nvariables = 10, nbundles = 3,
       nperbundle = 4, noisesd = 0.03,
       addlabels = true)) isa Gadfly.Plot

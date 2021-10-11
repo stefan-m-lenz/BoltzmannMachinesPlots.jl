@@ -201,10 +201,10 @@ end
 
 """
     scatter(xy; ...)
-Creates a twp-dimensional scatter plot from the first two columns of the
+Creates a two-dimensional scatter plot from the first two columns of the
 matrix `xy`.
-Each of the rows in the matrix is displayed as one point and the two columns
-contain their x- and y-values.
+Each of the rows in the matrix is displayed as one point with the two columns
+containing the x- and y-values.
 
 # Optional named arguments:
 * `labels`: a vector of labels of the same length as the columns in the matrix `xy`.
@@ -270,7 +270,7 @@ hidden nodes.
 The activation is either induced by the dataset `x` in the Boltzmann machine `bm`
 or it is directly specified as matrix `h`.
 This function can be used to inspect pairs of hidden nodes.
-If you want to get a reduced view on a larger number of hidden nodes, consider
+For getting a reduced view on a larger number of hidden nodes, consider
 employing `BoltzmannMachines.top2latentdims`.
 
 # Optional keyword arguments:
@@ -311,6 +311,28 @@ function scatterhidden(hh::Matrix{Float64};
 end
 
 
+"""
+    crossvalidationcurve(monitor; ...)
+Plots the results of cross-validation experiments conducted
+over the course of the training.
+For each training epoch, the results of the evaluations for the
+different data sets used in the cross-validation are displayed
+in form of box plots.
+The mean values of the evaluations are also displayed.
+Such a plot be used to determine the optimal number of training
+epochs if the other parameters are given.
+
+The `monitor` argument contains the monitoring results of an
+evaluation criterion.
+
+See also: `BoltzmannMachines.crossvalidation`,
+`BoltzmannMachines.monitored_fitrbm`,
+`BoltzmannMachines.monitored_fitdbm`.
+
+# Optional keyword argument:
+* `evaluation`: a string specifying the evaluation of interest.
+  May be used if the `monitor` contains multiple evaluations.
+"""
 function crossvalidationcurve(monitor::BMs.Monitor,
          evaluation::String = "")
 
@@ -333,7 +355,7 @@ function crossvalidationcurve(monitor::BMs.Monitor,
    plot(
          layer(meanplotdata, x = "epoch", y = "score_mean", Geom.line,
                Theme(default_color = parse(Compose.Colorant, "green"))),
-         layer(meanplotdata, x = "epoch", y = "score", Geom.boxplot),
+         layer(boxplotdata, x = "epoch", y = "score", Geom.boxplot),
                Guide.xlabel("Epoch"), Guide.ylabel("Score"))
 end
 
