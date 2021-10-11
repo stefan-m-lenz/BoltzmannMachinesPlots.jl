@@ -15,12 +15,15 @@ function test_scatterhidden()
 end
 test_scatterhidden()
 
+# TODO
+# function test_plotevaluation_noribbon()
+#    monitor, rbm = BMs.monitored_fitrbm(BMs.barsandstripes(10, 9),
+#       monitoring = monitorloglikelihood!)
+#    @test plotevaluation(monitor; sdrange = 0.0) isa Gadfly.Plot
+# end
+# test_plotevaluation_noribbon()
 
-function test_plottop2latentdims()
-   x, xlabels = BMs.blocksinnoise(50, 9, nblocks = 2, blocklen = 2)
-   dbm = BMs.fitdbm(x, epochs = 1)
-   @test plottop2latentdims(dbm, x) isa Gadfly.Plot
-   @test plottop2latentdims(dbm, x; labels = xlabels) isa Gadfly.Plot
-   nothing
-end
-test_plottop2latentdims()
+
+@test BoltzmannMachinesPlots.plotcurvebundles(BMs.curvebundles(nvariables = 10, nbundles = 3,
+      nperbundle = 4, noisesd = 0.03,
+      addlabels = true)) isa Gadfly.Plot

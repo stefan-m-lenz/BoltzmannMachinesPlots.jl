@@ -13,7 +13,7 @@ using Gadfly
 using Statistics
 
 
-export plotevaluation, plottop2latentdims, crossvalidationcurve, scatterhidden
+export plotevaluation, crossvalidationcurve, scatterhidden, scatter
 
 
 function checkdata(plotdata)
@@ -165,21 +165,6 @@ function plotevaluation(monitor::BMs.Monitor,
 end
 
 
-"""
-    plottop2latentdims(dbm, x; ...)
-Creates a two-dimensional scatter plot with the top two latent dimensions
-of the data set `x` that are extracted from the hidden nodes of the `dbm`
-(see `BoltzmannMachines.top2latentdims`).
-
-## Optional keyword argument:
-* `labels`: Can be specified for coloring the dots
-"""
-function plottop2latentdims(dbm, x; labels = [], opacity = 1.0)
-   dimred = BMs.top2latentdims(dbm, x)
-   scatter(dimred, opacity = opacity, labels = labels)
-end
-
-
 function plotcurvebundles(x::Matrix{Float64};
       nlabelvars::Int =
             sum(mapslices(col -> all(((col .== 1.0) .| (col .== 0.0))), x, dims = 1))
@@ -197,10 +182,10 @@ function plotcurvebundles(x::Matrix{Float64};
 
       nlabels = maximum(labels)
       labelcolors = Scale.default_discrete_colors(nlabels)
-      plotdata = convert(DataFrame, x[:, (nlabelvars + 1):end])
-      names!(plotdata, map(Symbol, 1:ncol(plotdata)))
-      plotdata[:label] = labels
-      plotlayerdfs = map(i -> DataFrames.melt(plotdata[i, :], [:label]),
+      plotdata = DataFrame(x[:, (nlabelvars + 1):end], :auto)
+      rename!(plotdata, map(Symbol, 1:ncol(plotdata)))
+      plotdata[!, :label] = labels
+      plotlayerdfs = map(i -> DataFrames.stack(DataFrame(plotdata[i,:]), Not(:label)),
             1:nrow(plotdata))
 
       plotlayers = map(
@@ -214,6 +199,20 @@ function plotcurvebundles(x::Matrix{Float64};
 end
 
 
+"""
+    scatter(xy; ...)
+Creates a twp-dimensional scatter plot from the first two columns of the
+matrix `xy`.
+Each of the rows in the matrix is displayed as one point and the two columns
+contain their x- and y-values.
+
+# Optional named arguments:
+* `labels`: a vector of labels of the same length as the columns in the matrix `xy`.
+   Each entry contains a label for a row of `xy`.
+* `opacity`: the opacity of the dots
+* `xlabel`: a label for the x axis
+* `ylabel`: a label for the y axis
+"""
 function scatter(hh::Matrix{Float64};
       labels::Vector{T} = Vector{T}(undef, 0),
       opacity::Float64 = 1.0,
@@ -267,9 +266,12 @@ end
     scatterhidden(bm, x; ...)
     scatterhidden(h; ...)
 Creates a scatter plot of the logarithmized activation potential of
-hidden nodes, similar to a PCA plot.
+hidden nodes.
 The activation is either induced by the dataset `x` in the Boltzmann machine `bm`
 or it is directly specified as matrix `h`.
+This function can be used to inspect pairs of hidden nodes.
+If you want to get a reduced view on a larger number of hidden nodes, consider
+employing `BoltzmannMachines.top2latentdims`.
 
 # Optional keyword arguments:
 * `hiddennodes`: Tuple of integers, default `(1,2)`, selecting the first two
