@@ -7,11 +7,17 @@ using Test
 import Gadfly
 
 using BoltzmannMachinesPlots
+
 function test_scatterhidden()
-   hidden = rand(100, 2)
-   labels = rand(["1", "2", "3"], 100)
-   scatterhidden(hidden,
-         opacity = 0.5, labels = labels)
+   nsamples = 10
+   x = BMs.barsandstripes(10,4)
+   rbm = fitrbm(x, epochs = 1)
+   dbm = fitdbm(x, epochs = 1)
+   labels = rand(["1", "2", "3"], nsamples)
+   @test scatterhidden(rbm, x,
+         opacity = 0.5, labels = labels) isa Gadfly.Plot
+   @test scatterhidden(dbm, x,
+         labels = labels, opacity = 0.5) isa Gadfly.Plot
 end
 test_scatterhidden()
 

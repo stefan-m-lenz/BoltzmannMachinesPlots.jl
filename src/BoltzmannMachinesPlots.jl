@@ -237,20 +237,15 @@ function scatter(hh::Matrix{Float64};
 
    nuniquelabels = length(uniquelabels)
    labelcolors = Scale.default_discrete_colors(nuniquelabels)
-   if opacity != 1.0
-      pointcolors = map(c -> Gadfly.Colors.coloralpha(c, opacity),
-            labelcolors)
-   else
-      pointcolors = labelcolors
-   end
 
    layers = map(i -> begin
          labelmask = (labels .== uniquelabels[i])
          layer(
                x = hh[labelmask, 1],
                y = hh[labelmask, 2], Geom.point,
-               Theme(default_color = pointcolors[i],
-                     discrete_highlight_color = c -> nothing))
+               Theme(default_color = labelcolors[i],
+                     discrete_highlight_color=c->nothing), # no dot borders
+               alpha = [opacity])
       end, nuniquelabels:-1:1)
 
    if labelsgiven
