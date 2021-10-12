@@ -298,7 +298,8 @@ end
 
 
 """
-    crossvalidationcurve(monitor; ...)
+    crossvalidationcurve(monitor)
+    crossvalidationcurve(monitor, evaluationkey)
 Plots the results of cross-validation experiments conducted
 over the course of the training.
 For each training epoch, the results of the evaluations for the
@@ -310,14 +311,12 @@ epochs if the other parameters are given.
 
 The `monitor` argument contains the monitoring results of an
 evaluation criterion.
+Similar to `plotevaluation`, an `evaluationkey` can be specified
+if the `monitor` object contains multiple evaluations.
 
 See also: `BoltzmannMachines.crossvalidation`,
 `BoltzmannMachines.monitored_fitrbm`,
 `BoltzmannMachines.monitored_fitdbm`.
-
-# Optional keyword argument:
-* `evaluation`: a string specifying the evaluation of interest.
-  May be used if the `monitor` contains multiple evaluations.
 """
 function crossvalidationcurve(monitor::BMs.Monitor,
          evaluation::String = "")
