@@ -124,7 +124,7 @@ plottitledict = Dict(
     plotevaluation(monitor, evaluationkey; ...)
 Plots a curve that shows the values of the evaluation contained in the `monitor`
 and specified by the `evaluationkey` over the course of the training epochs.
-If no evaluationkey is specified, the evaluation type of the first monitor
+If no `evaluationkey` is specified, the evaluation type of the first monitor
 element is used.
 
 Optional keyword argument `sdrange`:
@@ -194,15 +194,15 @@ end
     scatter(xy; ...)
 Creates a two-dimensional scatter plot from the first two columns of the
 matrix `xy`.
-Each of the rows in the matrix is displayed as one point with the two columns
-containing the x- and y-values.
+Each of the rows in the matrix is displayed as one point.
+The two columns of the matrix contain the x- and y-values of the points.
 
 # Optional named arguments:
 * `labels`: a vector of labels of the same length as the columns in the matrix `xy`.
    Each entry contains a label for a row of `xy`.
 * `opacity`: the opacity of the dots
-* `xlabel`: a label for the x axis
-* `ylabel`: a label for the y axis
+* `xlabel`: a label for the x-axis
+* `ylabel`: a label for the y-axis
 """
 function scatter(hh::Matrix{Float64};
       labels::Vector{T} = Vector{T}(undef, 0),
@@ -257,7 +257,7 @@ The activation is either induced by the dataset `x` in the Boltzmann machine `bm
 or it is directly specified as matrix `h`.
 This function can be used to inspect pairs of hidden nodes.
 For getting a reduced view on a larger number of hidden nodes, consider
-employing `BoltzmannMachines.top2latentdims`.
+employing `BoltzmannMachines.top2latentdims` and `scatter`.
 
 # Optional keyword arguments:
 * `hiddennodes`: Tuple of integers, default `(1,2)`, selecting the first two
