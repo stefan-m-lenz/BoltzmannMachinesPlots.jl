@@ -21,13 +21,13 @@ function test_scatterhidden()
 end
 test_scatterhidden()
 
-# TODO
-# function test_plotevaluation_noribbon()
-#    monitor, rbm = BMs.monitored_fitrbm(BMs.barsandstripes(10, 9),
-#       monitoring = monitorloglikelihood!)
-#    @test plotevaluation(monitor; sdrange = 0.0) isa Gadfly.Plot
-# end
-# test_plotevaluation_noribbon()
+
+function test_plotevaluation_noribbon()
+   monitor, rbm = BMs.monitored_fitrbm(BMs.barsandstripes(10, 9),
+      monitoring = monitorloglikelihood!)
+   @test plotevaluation(monitor; sdrange = 0.0) isa Gadfly.Plot
+end
+test_plotevaluation_noribbon()
 
 
 function test_crossvalidation()

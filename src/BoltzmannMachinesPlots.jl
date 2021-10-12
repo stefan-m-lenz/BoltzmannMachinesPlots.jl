@@ -74,8 +74,8 @@ end
 Plots the information about the estimated lower bound of the log probability
 that has been gathered while training a BMs.
 "
-function plotestimatedprob(monitor::BMs.Monitor, evaluationkey::String;
-      sdrange::Float64 = 0.0)
+function plotestimatedprob(monitor::BMs.Monitor, evaluationkey::String,
+      sdrange::Float64)
 
    title = plottitledict[evaluationkey]
    plotdata = extractaisdata(monitor, evaluationkey, sdrange)
@@ -83,36 +83,27 @@ function plotestimatedprob(monitor::BMs.Monitor, evaluationkey::String;
 
    # remove ribbon for values that are too uncertain and warn about it
    badribbon = false
-   if sdrange != 0
-      valrange = abs(maximum(plotdata[!, :value]) - minimum(plotdata[!, :value]))
-      for row in eachrow(plotdata)
-         if row[:ymin] < row[:value] - 5 * valrange
-            row[:ymin] = row[:value]
-            badribbon = true
-         end
-         if row[:ymax] > row[:value] + 5 * valrange
-            row[:ymax] = row[:value]
-            badribbon = true
-         end
+   valrange = abs(maximum(plotdata[!, :value]) - minimum(plotdata[!, :value]))
+   for row in eachrow(plotdata)
+      if row[:ymin] < row[:value] - 5 * valrange
+         row[:ymin] = row[:value]
+         badribbon = true
+      end
+      if row[:ymax] > row[:value] + 5 * valrange
+         row[:ymax] = row[:value]
+         badribbon = true
       end
    end
    if badribbon
       @warn "Too much uncertainty at some points: Ribbon (partially) not displayed."
    end
 
-   if sdrange != 0
-      plot(plotdata, x = "epoch", y = "value", ymin = "ymin", ymax = "ymax",
-            color = "datasetname",
-            Geom.line, Geom.ribbon,
-            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
-            Guide.colorkey(title = "Data set"),
-            Guide.title(title))
-   else
-      plot(plotdata, x = "epoch", y = "value", color = "datasetname",
-            Guide.xlabel("Epoch"), Guide.ylabel("Value"),
-            Guide.colorkey(title = "Data set"),
-            Geom.line, Guide.title(title))
-   end
+   plot(plotdata, x = "epoch", y = "value", ymin = "ymin", ymax = "ymax",
+         color = "datasetname",
+         Geom.line, Geom.ribbon,
+         Guide.xlabel("Epoch"), Guide.ylabel("Value"),
+         Guide.colorkey(title = "Data set"),
+         Guide.title(title))
 end
 
 
@@ -150,8 +141,8 @@ function plotevaluation(monitor::BMs.Monitor,
       evaluationkey::String = monitor[1].evaluation;
       sdrange::Float64 = 2.0, changetitle::Function = identity)
 
-   if evaluationkey in [BMs.monitorloglikelihood; BMs.monitorlogproblowerbound]
-      return plotestimatedprob(monitor, evaluationkey; sdrange = sdrange)
+   if evaluationkey in [BMs.monitorloglikelihood; BMs.monitorlogproblowerbound] && sdrange != 0.0
+      return plotestimatedprob(monitor, evaluationkey, sdrange)
    end
 
    # Otherwise, it is a simple line plot.
